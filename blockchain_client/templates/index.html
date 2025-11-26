@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Blockchain Client</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/vendor/DataTables/css/datatables.min.css">
+  <link rel="stylesheet" href="/static/vendor/font-awesome/font-awesome.min.css">
+  <link rel="stylesheet" href="/static/vendor/bootstrap/css/custom.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a href="/" class="navbar-brand">Blockchain Client</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a href="/" class="nav-link active" aria-current="page">Wallet Generator</a></li>
+          <li class="nav-item"><a href="/make/transaction" class="nav-link">Make Transaction</a></li>
+          <li class="nav-item"><a href="/view/transactions" class="nav-link">View Transactions</a></li>
+          <li class="nav-item"><a href="/issue_certificate" class="nav-link">Issue Certificate</a></li>
+          <li class="nav-item"><a href="/verify_certificate" class="nav-link">Verify Certificate</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top:5rem">
+    <section class="text-center">
+      <h1 class="h4">Wallet Generator</h1>
+      <p>Generate a demo RSA keypair.</p>
+      <button id="btnGenerate" type="button" class="btn btn-primary btn-lg">Generate Wallet</button>
+    </section>
+
+    <section class="mt-4">
+      <div class="row mb-3">
+        <label for="public_key" class="col-sm-2 col-form-label">Public Key</label>
+        <div class="col-sm-10">
+          <textarea id="public_key" class="form-control" rows="6" readonly></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <label for="private_key" class="col-sm-2 col-form-label">Private Key</label>
+        <div class="col-sm-10">
+          <textarea id="private_key" class="form-control" rows="6" readonly></textarea>
+        </div>
+      </div>
+      <div id="warning" class="row mt-3 d-none">
+        <div class="col-sm-12">
+          <div class="alert alert-danger" role="alert">
+            <strong>IMPORTANT</strong>
+            <ul class="mb-0">
+              <li>Save your keys safely; they can’t be recovered.</li>
+              <li>Never share your private key.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(function(){
+      $('#btnGenerate').on('click', function(){
+        $.get('/wallet/new', function(r){
+          $('#public_key').val(r.public_key || '');
+          $('#private_key').val(r.private_key || '');
+          $('#warning').removeClass('d-none');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

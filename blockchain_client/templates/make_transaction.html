@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Make Transaction</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/vendor/bootstrap/css/custom.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a href="/" class="navbar-brand">Blockchain Client</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a href="/" class="nav-link">Wallet</a></li>
+          <li class="nav-item"><a href="/make/transaction" class="nav-link active" aria-current="page">Make Tx</a></li>
+          <li class="nav-item"><a href="/view/transactions" class="nav-link">View Tx</a></li>
+          <li class="nav-item"><a href="/issue_certificate" class="nav-link">Issue Cert</a></li>
+          <li class="nav-item"><a href="/verify_certificate" class="nav-link">Verify Cert</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top:5rem">
+    <section class="text-center">
+      <h1 class="h4">Send Coins (Demo)</h1>
+    </section>
+
+    <section class="container alert alert-secondary">
+      <form id="transaction_form">
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label" for="sender_public_key">Sender Public Key</label>
+          <div class="col-sm-10"><input type="text" id="sender_public_key" name="sender_public_key" class="form-control" required></div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label" for="sender_private_key">Sender Private Key</label>
+          <div class="col-sm-10"><input type="text" id="sender_private_key" name="sender_private_key" class="form-control" required></div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label" for="recipient_public_key">Recipient Public Key</label>
+          <div class="col-sm-10"><input type="text" id="recipient_public_key" name="recipient_public_key" class="form-control" required></div>
+        </div>
+        <div class="row mb-3">
+          <label class="col-sm-2 col-form-label" for="amount">Amount</label>
+          <div class="col-sm-10"><input type="number" step="0.0001" id="amount" name="amount" class="form-control" required></div>
+        </div>
+        <div class="text-center">
+          <button id="generate_transaction" type="button" class="btn btn-primary">Generate Transaction</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Confirm modal -->
+    <div class="modal fade" id="basic_modal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header">
+          <h2 class="h6 modal-title">Confirm details, set node URL, then submit</h2>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="confirmation_transaction_form">
+            <div class="mb-3">
+              <label class="form-label" for="confirmation_sender_public_key">Sender Public Key</label>
+              <input class="form-control" id="confirmation_sender_public_key" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="confirmation_recipient_public_key">Recipient Public Key</label>
+              <input class="form-control" id="confirmation_recipient_public_key" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="confirmation_amount">Amount</label>
+              <input class="form-control" id="confirmation_amount" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="transaction_signature">Signature</label>
+              <input class="form-control" id="transaction_signature" readonly>
+            </div>
+          </form>
+          <div class="mb-3">
+            <label class="form-label" for="node_url">Blockchain Node URL</label>
+            <input class="form-control" id="node_url" value="http://127.0.0.1:5001">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+          <button id="button_confirm_transaction" class="btn btn-success" type="button">Confirm Transaction</button>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Success -->
+    <div class="modal fade" id="success_transaction_modal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="alert alert-success mb-0"><strong>Success!</strong> Transaction will be added to the next block.</div>
+        </div>
+      </div></div>
+    </div>
+  </main>
+
+  <script src="/static/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(function(){
+      $('#generate_transaction').on('click', function(){
+        $.post('/generate/transaction', $('#transaction_form').serialize(), function(r){
+          $('#confirmation_sender_public_key').val(r.transaction.sender_public_key || '');
+          $('#confirmation_recipient_public_key').val(r.transaction.recipient_public_key || '');
+          $('#confirmation_amount').val(r.transaction.amount || '');
+          $('#transaction_signature').val(r.signature || '');
+          $('#basic_modal').modal('show');
+        }, 'json');
+      });
+
+      $('#button_confirm_transaction').on('click', function(){
+        $.ajax({
+          url: $('#node_url').val() + '/transactions/new',
+          type: 'POST',
+          dataType: 'json',
+          headers: {'Access-Control-Allow-Origin': '*'},
+          data: $('#confirmation_transaction_form').serialize(),
+          success: function(){ $('#basic_modal').modal('hide'); $('#success_transaction_modal').modal('show'); },
+          error: function(e){ console.log(e); }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
