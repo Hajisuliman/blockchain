@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>View Transactions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/vendor/DataTables/css/datatables.min.css">
+  <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="/">Blockchain Client</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="/">Wallet</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/view/transactions" aria-current="page">View Transaction</a></li>
+          <li class="nav-item"><a class="nav-link" href="/issue_certificate">Issue Certificate</a></li>
+          <li class="nav-item"><a class="nav-link" href="/verify_certificate">Verify Certificate</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top:5rem">
+    <section class="alert alert-secondary">
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label" for="node_url">Node URL</label>
+        <div class="col-sm-10"><input id="node_url" type="url" class="form-control" value="http://127.0.0.1:5001"></div>
+      </div>
+      <div class="text-center">
+        <button id="view_transactions" type="button" class="btn btn-primary btn-lg">View Transactions</button>
+      </div>
+    </section>
+
+    <section class="container">
+      <table id="transactions_table" class="table table-striped table-bordered" style="width:100%"></table>
+    </section>
+  </main>
+
+  <script src="/static/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/vendor/DataTables/js/datatables.min.js"></script>
+  <script>
+    $(function(){
+      $('#view_transactions').on('click', function(){
+        const url = ($('#node_url').val()||'').trim();
+        $.get(url + '/chain', function(resp){
+          const rows=[]; let n=1;
+          for(let i=1;i<resp.chain.length;i++){
+            const block = resp.chain[i];
+            const when = new Date(block.timestamp*1000).toLocaleString();
+            for(const tx of block.transactions){
+              const recipient = tx.recipient || tx.recipient_public_key || '';
+              const sender = tx.sender || tx.sender_public_key || '';
+              const amount = (typeof tx.amount!=='undefined') ? tx.amount : '';
+              const txType = tx.tx_type || 'PAYMENT';
+              const docHash = tx.doc_hash ? (tx.doc_hash.substring(0,16)+'…') : '';
+              rows.push([n++, txType, recipient, sender, amount, when, block.index, docHash]);
+            }
+          }
+          $('#transactions_table').DataTable({
+            destroy:true,
+            data:rows,
+            columns:[
+              {title:'#'},{title:'Type'},{title:'Recipient'},{title:'Sender'},
+              {title:'Amount'},{title:'Block Time'},{title:'Block #'},
+              {title:'Doc Hash (prefix)'}
+            ]
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
